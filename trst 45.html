@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon Portefeuille</title>
+
+<style>
+body{background:#f5f5f7;font-family:-apple-system,sans-serif;padding:20px 10px;min-height:100vh}
+.row{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.col{display:flex;flex-direction:column;align-items:center;width:320px}
+.box{background:white;padding:30px 20px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.1);text-align:center;margin-bottom:20px}
+.logo{font-size:50px;margin-bottom:10px}
+.price{font-size:36px;font-weight:800;color:#007aff}
+.change{font-size:18px}
+.pos{color:#00c853}
+.neg{color:#ff3b30}
+.time{color:#888;font-size:12px;margin-top:15px}
+.mini{background:linear-gradient(135deg,#007aff,#00c853);color:white;padding:18px 15px;border-radius:18px;text-align:center;box-shadow:0 8px 25px rgba(0,0,0,0.25);font-weight:800;margin:8px 0;width:100%;font-size:20px}
+.mini:nth-child(2){background:linear-gradient(135deg,#8e2de2,#4a00e0)}
+.mini:nth-child(3){background:linear-gradient(135deg,#ff6b6b,#feca57)}
+.mini:nth-child(5){background:linear-gradient(135deg,#11998e,#38ef7d)}
+.mini:nth-child(6){background:linear-gradient(135deg,#fc4a1a,#f7b733)}
+.mini:nth-child(8){background:linear-gradient(135deg,#ff512f,#dd2476)}
+.mini:nth-child(9){background:linear-gradient(135deg,#4568dc,#b06ab3)}
+.val{font-size:28px;margin:6px 0}
+.var{font-size:19px;opacity:0.9}
+.refresh{background:#007aff;color:white;border:none;padding:14px 30px;border-radius:12px;font-size:17px;width:90%;max-width:400px;margin-top:20px}
+</style>
+
+</head>
+
+<body>
+
+<div class="row">
+
+  <!-- TSLA -->
+  <div class="col">
+    <div class="box">
+      <div class="logo">TSLA</div>
+      <div class="price" id="tsla-price">$0.00</div>
+      <div class="change" id="tsla-change"></div>
+      <div class="time">500 actions</div>
+    </div>
+    <div class="mini">
+      <div>Jour</div><div class="val" id="tsla-usd">0 $</div><div class="var">USD</div>
+    </div>
+    <div class="mini">
+      <div>Jour</div><div class="val" id="tsla-xpf">0 XPF</div><div class="var">XPF</div>
+    </div>
+    <div class="mini">
+      <div>Jour</div><div class="val" id="tsla-eur">0 €</div><div class="var">EUR</div>
+    </div>
+  </div>
+
+  <!-- TSM -->
+  <div class="col">
+    <div class="box">
+      <div class="logo">TSM</div>
+      <div class="price" id="tsm-price">$0.00</div>
+      <div class="change" id="tsm-change"></div>
+      <div class="time">30 actions</div>
+    </div>
+    <div class="mini">
+      <div>Jour</div><div class="val" id="tsm-usd">0 $</div><div class="var">USD</div>
+    </div>
+    <div class="mini">
+      <div>Jour</div><div class="val" id="tsm-xpf">0 XPF</div><div class="var">XPF</div>
+    </div>
+    <div class="mini">
+      <div>Jour</div><div class="val" id="tsm-eur">0 €</div><div class="var">EUR</div>
+    </div>
+  </div>
+
+  <!-- NVDA -->
+  <div class="col">
+    <div class="box">
+      <div class="logo">NVDA</div>
+      <div class="price" id="nvda-price">$0.00</div>
+      <div class="change" id="nvda-change"></div>
+      <div class="time">50 actions</div>
+    </div>
+    <div class="mini">
+      <div>Jour</div><div class="val" id="nvda-usd">0 $</div><div class="var">USD</div>
+    </div>
+    <div class="mini">
+      <div>Jour</div><div class="val" id="nvda-xpf">0 XPF</div><div class="var">XPF</div>
+    </div>
+    <div class="mini">
+      <div>Jour</div><div class="val" id="nvda-eur">0 €</div><div class="var">EUR</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bouton cache-buster -->
+<button class="refresh"
+onclick="window.location.href = window.location.pathname + '?t=' + new Date().getTime()">
+  Rafraîchir
+</button>
+
+
+<script>
+// ----------------------------
+// CONFIGURATION
+// ----------------------------
+const API_KEY = "d4hoafhr01quqml9t1vgd4hoafhr01quqml9t200";
+
+const stocks = {
+  TSLA: { shares: 500 },
+  TSM:  { shares: 30 },
+  NVDA: { shares: 50 }
+};
+
+const USD_TO_XPF = 119.33;  // taux approximatif (peux être rendu dynamique)
+const USD_TO_EUR = 0.95;    // taux approximatif
+
+// ----------------------------
+// FONCTION API FINNHUB
+// ----------------------------
+async function getQuote(symbol) {
+  const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
+  const r = await fetch(url);
+  return await r.json();
+}
+
+// ----------------------------
+// MISE À JOUR DES CARTES
+// ----------------------------
+async function updateStock(symbol) {
+  
+  const q = await getQuote(symbol);
+  // q.c = prix actuel
+  // q.d = variation en $
+//  q.dp = variation en %
+
+  const price = q.c.toFixed(2);
+  const change = q.d.toFixed(2);
+  const changePct = q.dp.toFixed(2);
+
+  document.getElementById(symbol.toLowerCase()+"-price").innerHTML = "$" + price;
+
+  const el = document.getElementById(symbol.toLowerCase()+"-change");
+  el.innerHTML = `${change} (${changePct}%)`;
+  el.className = "change " + (change >= 0 ? "pos" : "neg");
+
+  // Calcul variation totale (variation * nombre d’actions)
+  const totalUSD = q.d * stocks[symbol].shares;
+  const totalXPF = totalUSD * USD_TO_XPF;
+  const totalEUR = totalUSD * USD_TO_EUR;
+
+  document.getElementById(symbol.toLowerCase()+"-usd").innerHTML =
+    (totalUSD>=0?"+":"") + totalUSD.toFixed(0) + " $";
+
+  document.getElementById(symbol.toLowerCase()+"-xpf").innerHTML =
+    (totalXPF>=0?"+":"") + totalXPF.toFixed(0) + " XPF";
+
+  document.getElementById(symbol.toLowerCase()+"-eur").innerHTML =
+    (totalEUR>=0?"+":"") + totalEUR.toFixed(0) + " €";
+}
+
+// ----------------------------
+// MISE À JOUR DE TOUT
+// ----------------------------
+async function updateAll() {
+  updateStock("TSLA");
+  updateStock("TSM");
+  updateStock("NVDA");
+}
+
+updateAll();           // au chargement
+setInterval(updateAll, 15000); // toutes les 15 secondes
+
+</script>
+
+</body>
+</html>
